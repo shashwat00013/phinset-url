@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Phishing URL Detector",
+  "version": "1.0",
+  "description": "Detects phishing URLs using machine learning",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:5000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}

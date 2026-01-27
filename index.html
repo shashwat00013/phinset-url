@@ -1,0 +1,229 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phishing URL Detector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+
+<!-- 🔽 FIXED EXTENSION DOWNLOAD BUTTON (DESKTOP ONLY, NO OVERLAP) -->
+<a href="Phishing_URL_Detector_Extension.zip" download
+   class="fixed top-24 right-6 z-50
+          hidden md:flex items-center gap-2
+          bg-gradient-to-r from-indigo-600 to-purple-600
+          text-white px-5 py-3 rounded-xl shadow-xl
+          hover:scale-105 transition-all duration-300">
+
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 48 48">
+    <path fill="#FFC107" d="M43.6 20H24l8.4-14.6C38.7 8.7 43.6 13.9 43.6 20z"/>
+    <path fill="#4CAF50" d="M24 44c-7.7 0-14.4-4.5-17.7-11l8.4-14.5H6.4C6.4 30.1 14.2 44 24 44z"/>
+    <path fill="#F44336" d="M15.3 18.5L6.9 4C10.1 1.5 13.9 0 18 0c6.6 0 12.3 3.9 15.1 9.4L24 18.5z"/>
+    <circle cx="24" cy="24" r="8" fill="#2196F3"/>
+  </svg>
+
+  <span class="font-semibold">Download Extension</span>
+</a>
+
+<!-- 🔼 END BUTTON -->
+
+<div class="container mx-auto px-4 py-12 max-w-4xl">
+
+  <!-- HEADER -->
+  <div class="text-center mb-12">
+    <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+      Phishing URL Detector
+    </h1>
+    <p class="text-gray-600 text-lg">
+      AI-powered protection against malicious websites
+    </p>
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 border">
+    <label class="block text-sm font-semibold text-gray-700 mb-3">
+      Enter URL to Analyze
+    </label>
+
+    <div class="flex gap-3">
+      <input
+        type="url"
+        id="urlInput"
+        placeholder="https://example.com"
+        class="flex-1 px-4 py-4 border-2 border-gray-200 rounded-xl
+               focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg"
+      />
+      <button
+        onclick="analyzeUrl()"
+        class="bg-gradient-to-r from-blue-600 to-indigo-600
+               text-white px-8 py-4 rounded-xl font-semibold text-lg
+               shadow-lg flex items-center gap-3"
+      >
+        <span id="btnText">Analyze</span>
+        <span id="loader"
+              class="hidden w-5 h-5 border-2 border-white
+                     border-t-transparent rounded-full animate-spin">
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection" class="hidden animate-fadeIn">
+    <div id="mainCard" class="rounded-2xl shadow-xl p-8 border-2 mb-6">
+      <h2 id="resultTitle" class="text-2xl font-bold mb-4"></h2>
+
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-500">Prediction</p>
+          <p id="predictionValue" class="text-3xl font-bold"></p>
+        </div>
+        <div class="bg-white rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-500">Confidence</p>
+          <p id="confidenceValue" class="text-3xl font-bold"></p>
+        </div>
+        <div class="bg-white rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-500">Status</p>
+          <p id="statusValue" class="text-xl font-semibold"></p>
+        </div>
+      </div>
+
+      <p id="reasonText" class="text-gray-700 font-medium"></p>
+
+      <div id="warningBox"
+           class="hidden bg-red-100 border border-red-300 rounded-xl p-4 mt-4">
+        ⚠ This URL may be dangerous. Avoid opening it.
+      </div>
+      <div id="detailsSection" class="hidden mt-6 grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-500">ML Probability</p>
+          <p id="mlProbValue" class="text-2xl font-semibold"></p>
+        </div>
+        <div class="bg-white rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-500">Rule Adjustment</p>
+          <p id="ruleAdjValue" class="text-2xl font-semibold"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API_ENDPOINT = "/predict";
+
+  async function analyzeUrl() {
+    const url = document.getElementById("urlInput").value.trim();
+    if (!url) {
+      alert("Please enter a URL");
+      return;
+    }
+
+    document.getElementById("loader").classList.remove("hidden");
+    document.getElementById("btnText").textContent = "Analyzing";
+
+    try {
+      const res = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await res.json();
+      showResults(data);
+
+    } catch (err) {
+      showResults({
+        prediction: "error",
+        confidence: "0",
+        reason: "Backend not reachable"
+      });
+    } finally {
+      document.getElementById("loader").classList.add("hidden");
+      document.getElementById("btnText").textContent = "Analyze";
+    }
+  }
+
+  function showResults(result) {
+    document.getElementById("resultsSection").classList.remove("hidden");
+
+    const card = document.getElementById("mainCard");
+    const prediction = document.getElementById("predictionValue");
+    const confidence = document.getElementById("confidenceValue");
+    const reason = document.getElementById("reasonText");
+    const status = document.getElementById("statusValue");
+    const title = document.getElementById("resultTitle");
+    const warning = document.getElementById("warningBox");
+    const detailsSection = document.getElementById("detailsSection");
+    const mlProbValue = document.getElementById("mlProbValue");
+    const ruleAdjValue = document.getElementById("ruleAdjValue");
+
+    prediction.textContent = result.prediction.toUpperCase();
+    confidence.textContent = (result.confidence || "0") + "%";
+    reason.textContent = "Reason: " + (result.reason || "No strong risk indicators detected");
+
+    warning.classList.add("hidden");
+
+    // Details from backend (if present)
+    if (result.details && (result.details.ml_probability !== undefined || result.details.rule_adjustment !== undefined)) {
+      detailsSection.classList.remove("hidden");
+      if (result.details.ml_probability !== undefined) {
+        try {
+          mlProbValue.textContent = (Number(result.details.ml_probability) * 100).toFixed(1) + "%";
+        } catch (e) {
+          mlProbValue.textContent = String(result.details.ml_probability);
+        }
+      } else {
+        mlProbValue.textContent = "-";
+      }
+      if (result.details.rule_adjustment !== undefined) {
+        try {
+          ruleAdjValue.textContent = (Number(result.details.rule_adjustment) * 100).toFixed(1) + "%";
+        } catch (e) {
+          ruleAdjValue.textContent = String(result.details.rule_adjustment);
+        }
+      } else {
+        ruleAdjValue.textContent = "-";
+      }
+    } else {
+      detailsSection.classList.add("hidden");
+    }
+
+    if (result.prediction === "safe") {
+      card.className = "rounded-2xl shadow-xl p-8 border-2 mb-6 bg-green-50 border-green-300";
+      prediction.className = "text-3xl font-bold text-green-700";
+      status.textContent = "No Threat Detected";
+      status.className = "text-xl font-semibold text-green-600";
+      title.textContent = "Safe URL";
+    } else if (result.prediction === "suspicious") {
+      card.className = "rounded-2xl shadow-xl p-8 border-2 mb-6 bg-yellow-50 border-yellow-300";
+      prediction.className = "text-3xl font-bold text-yellow-700";
+      status.textContent = "Suspicious";
+      status.className = "text-xl font-semibold text-yellow-600";
+      title.textContent = "Suspicious URL";
+    } else {
+      card.className = "rounded-2xl shadow-xl p-8 border-2 mb-6 bg-red-50 border-red-300";
+      prediction.className = "text-3xl font-bold text-red-700";
+      status.textContent = "High Risk";
+      status.className = "text-xl font-semibold text-red-600";
+      title.textContent = "Unsafe URL";
+      warning.classList.remove("hidden");
+    }
+  }
+</script>
+
+</body>
+</html>
+
