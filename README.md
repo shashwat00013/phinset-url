@@ -2,7 +2,7 @@
 
 An AI-powered web application that analyzes URLs to detect potential phishing attempts using machine learning and heuristic rules.
 
-## 🚀 Features
+## 🚀 Features.
 
 - **Real-time URL Analysis**: Instant detection of malicious URLs
 - **Machine Learning Model**: Trained on large datasets using TF-IDF and structural features.
