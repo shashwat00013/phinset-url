@@ -49,7 +49,7 @@ The model achieves high accuracy on phishing detection with:
    ```bash
    git clone <repository-url>
    cd phishing-url-detector
-   ```
+   ```----
 
 2. **Install dependencies**
    ```bash
