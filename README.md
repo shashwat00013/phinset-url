@@ -5,7 +5,7 @@ An AI-powered web application that analyzes URLs to detect potential phishing at
 ## 🚀 Features
 
 - **Real-time URL Analysis**: Instant detection of malicious URLs
-- **Machine Learning Model**: Trained on large datasets using TF-IDF and structural features
+- **Machine Learning Model**: Trained on large datasets using TF-IDF and structural features.
 - **Heuristic Rules**: Additional safety checks for known trusted/risky domains
 - **Web Interface**: Clean, responsive UI built with Tailwind CSS
 - **REST API**: Backend API for programmatic access
